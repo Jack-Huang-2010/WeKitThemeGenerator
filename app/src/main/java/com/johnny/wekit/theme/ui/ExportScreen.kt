@@ -2,8 +2,11 @@ package com.johnny.wekit.theme.ui
 
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.widget.Toast
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -11,13 +14,21 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -28,8 +39,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
 import com.johnny.wekit.theme.data.ThemeProject
 import com.johnny.wekit.theme.util.ImageSlotTree
@@ -43,6 +57,7 @@ fun ExportScreen(
 ) {
     val context = LocalContext.current
     var exportedFile by remember { mutableStateOf<File?>(null) }
+    var exportedDownloadsUri by remember { mutableStateOf<Uri?>(null) }
     var isExporting by remember { mutableStateOf(false) }
 
     Column(
@@ -54,7 +69,7 @@ fun ExportScreen(
     ) {
         Text("生成导出", style = MaterialTheme.typography.headlineMedium)
 
-        // Theme summary
+        // 主题概览
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(
@@ -73,14 +88,15 @@ fun ExportScreen(
             }
         }
 
-        // Export button
+        // 生成按钮
         Button(
             onClick = {
                 isExporting = true
+                exportedDownloadsUri = null
                 try {
                     val file = onExport(context)
                     exportedFile = file
-                    Toast.makeText(context, "导出成功: ${file.name}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "已生成: ${file.name}", Toast.LENGTH_SHORT).show()
                 } catch (e: Exception) {
                     Toast.makeText(context, "导出失败: ${e.message}", Toast.LENGTH_SHORT).show()
                 } finally {
@@ -101,73 +117,154 @@ fun ExportScreen(
             )
         }
 
-        // Save to Downloads
+        // 导出成功后的操作卡片
         exportedFile?.let { file ->
-            OutlinedButton(
-                onClick = {
-                    val uri = ThemeExporter.saveToDownloads(context, file)
-                    if (uri != null) {
-                        Toast.makeText(context, "已保存到 Downloads", Toast.LENGTH_SHORT).show()
-                    } else {
-                        Toast.makeText(context, "保存失败", Toast.LENGTH_SHORT).show()
-                    }
-                },
-                modifier = Modifier.fillMaxWidth()
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
+                )
             ) {
-                Text("保存到 Downloads")
-            }
-
-            // Share
-            OutlinedButton(
-                onClick = {
-                    try {
-                        val uri = FileProvider.getUriForFile(
-                            context,
-                            "${context.packageName}.fileprovider",
-                            file
-                        )
-                        val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                            type = "application/zip"
-                            putExtra(Intent.EXTRA_STREAM, uri)
-                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                Column(modifier = Modifier.padding(16.dp)) {
+                    // 顶部：成功提示
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.primary),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Check,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onPrimary,
+                                modifier = Modifier.size(20.dp)
+                            )
                         }
-                        context.startActivity(Intent.createChooser(shareIntent, "分享主题包"))
-                    } catch (e: Exception) {
-                        Toast.makeText(context, "分享失败: ${e.message}", Toast.LENGTH_SHORT).show()
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text(
+                                "主题包已生成",
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Text(
+                                "文件大小: ${file.length() / 1024} KB",
+                                fontSize = 11.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
-                },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("分享主题包")
-            }
-        }
 
-        // Directory structure preview
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
-            )
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text("目录结构预览", style = MaterialTheme.typography.titleMedium)
-                Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
 
-                val themeName = project.manifest.name.ifBlank { "主题名" }
-                Text("$themeName/", style = MaterialTheme.typography.bodySmall)
-                Text("  ├── manifest.json", style = MaterialTheme.typography.bodySmall)
-                Text("  ├── colors.json", style = MaterialTheme.typography.bodySmall)
-                Text("  ├── strings.json", style = MaterialTheme.typography.bodySmall)
+                    HorizontalDivider(
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
+                    )
 
-                // Show replaced images
-                val replacedImages = project.images.keys.sorted()
-                if (replacedImages.isNotEmpty()) {
-                    replacedImages.forEachIndexed { index, path ->
-                        val prefix = if (index == replacedImages.lastIndex) "└──" else "├──"
-                        Text("  $prefix $path", style = MaterialTheme.typography.bodySmall)
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // 文件路径
+                    Text(
+                        "📁 临时文件路径",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        file.absolutePath,
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(vertical = 4.dp)
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // 操作按钮
+                    Button(
+                        onClick = {
+                            val uri = ThemeExporter.saveToDownloads(context, file)
+                            if (uri != null) {
+                                exportedDownloadsUri = uri
+                                Toast.makeText(
+                                    context,
+                                    "已保存到 Downloads 目录",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            } else {
+                                Toast.makeText(context, "保存失败", Toast.LENGTH_SHORT).show()
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Folder,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("保存到 Downloads 目录")
                     }
-                } else {
-                    Text("  └── (暂无图片)", style = MaterialTheme.typography.bodySmall)
+
+                    exportedDownloadsUri?.let { uri ->
+                        Text(
+                            "💾 已保存，可通过文件管理器查看：\n${uri.path}",
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(vertical = 4.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    OutlinedButton(
+                        onClick = {
+                            try {
+                                val uri = FileProvider.getUriForFile(
+                                    context,
+                                    "${context.packageName}.fileprovider",
+                                    file
+                                )
+                                val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                    type = "application/zip"
+                                    putExtra(Intent.EXTRA_STREAM, uri)
+                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                }
+                                context.startActivity(
+                                    Intent.createChooser(shareIntent, "分享主题包")
+                                )
+                            } catch (e: Exception) {
+                                Toast.makeText(
+                                    context,
+                                    "分享失败: ${e.message}",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Share,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("分享主题包")
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // 提示：怎么用
+                    Text(
+                        "📌 使用方法：\n1. 把 zip 解压到 WeKit 主题目录\n2. 重启微信即可看到效果",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        lineHeight = 18.sp
+                    )
                 }
             }
         }
@@ -182,7 +279,7 @@ private fun SummaryRow(label: String, value: String) {
             .padding(vertical = 2.dp),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text(value, style = MaterialTheme.typography.bodyMedium)
+        Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(value, fontWeight = FontWeight.Medium)
     }
 }

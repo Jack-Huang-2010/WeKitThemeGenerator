@@ -4,9 +4,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.TextFields
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -33,6 +33,7 @@ sealed class Screen(val route: String, val label: String, val icon: ImageVector)
     data object Strings : Screen("strings", "字符串", Icons.Default.TextFields)
     data object Images : Screen("images", "图片", Icons.Default.Image)
     data object Export : Screen("export", "导出", Icons.Default.Download)
+    data object About : Screen("about", "关于", Icons.Default.Info)
 }
 
 @Composable
@@ -45,7 +46,8 @@ fun ThemeNavigation(viewModel: ThemeViewModel = viewModel()) {
         Screen.Colors,
         Screen.Strings,
         Screen.Images,
-        Screen.Export
+        Screen.Export,
+        Screen.About
     )
 
     Scaffold(
@@ -120,6 +122,9 @@ fun ThemeNavigation(viewModel: ThemeViewModel = viewModel()) {
                         )
                     }
                 )
+            }
+            composable(Screen.About.route) {
+                AboutScreen()
             }
         }
     }
