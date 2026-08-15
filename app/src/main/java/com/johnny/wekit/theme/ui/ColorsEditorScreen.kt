@@ -35,8 +35,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.johnny.wekit.theme.data.ThemeColors
+import com.johnny.wekit.theme.util.DisplayName
 import org.json.JSONObject
 
 @Composable
@@ -154,7 +157,7 @@ fun ColorsEditorScreen(
             sortedGroups.forEach { (groupKey, keys) ->
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = ThemeColors.groupLabel(groupKey),
+                    text = DisplayName.colorGroupName(LocalContext.current, groupKey),
                     style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.primary
                 )
@@ -197,18 +200,26 @@ fun ColorsEditorScreen(
 
                             Spacer(modifier = Modifier.width(12.dp))
 
-                            // Key name
-                            Text(
-                                text = key,
-                                style = MaterialTheme.typography.bodyMedium,
-                                modifier = Modifier.weight(1f)
-                            )
+                            // Key name：中文化（找不到时 fallback 原始 key）
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = DisplayName.colorKeyName(LocalContext.current, key),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Medium
+                                )
+                                Text(
+                                    text = key,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
 
                             // Color value
                             Text(
-                                text = colorValue,
+                                text = colorValue.uppercase(),
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontFamily = FontFamily.Monospace
                             )
                         }
                         if (key != keys.last()) {

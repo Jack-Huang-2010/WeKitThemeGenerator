@@ -1,6 +1,8 @@
 package com.johnny.wekit.theme.ui
 
 import android.content.Intent
+import android.content.res.Resources
+import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -31,13 +33,15 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -66,7 +70,7 @@ fun AboutScreen() {
     ) {
         Spacer(modifier = Modifier.height(24.dp))
 
-        // APP 图标
+        // APP 图标（安全加载 + 失败占位）
         Box(
             modifier = Modifier
                 .size(96.dp)
@@ -74,11 +78,7 @@ fun AboutScreen() {
                 .background(MaterialTheme.colorScheme.primaryContainer),
             contentAlignment = Alignment.Center
         ) {
-            Image(
-                painter = painterResource(id = R.mipmap.ic_launcher),
-                contentDescription = stringResource(R.string.app_name),
-                modifier = Modifier.size(80.dp)
-            )
+            AppIconSafe(modifier = Modifier.size(80.dp))
         }
 
         Spacer(modifier = Modifier.height(20.dp))
@@ -211,4 +211,65 @@ private fun AboutDivider() {
         modifier = Modifier.padding(horizontal = 16.dp),
         color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
     )
+}
+
+/**
+ * 安全加载 APP 图标 — 任何异常都不会导致页面崩溃。
+ * 1. 优先用 BitmapFactory.decodeResource 加载（更宽松，支持 PNG/JPG/WEBP 任意格式）
+ * 2. 加载失败用 painterResource 兜底（PNG 路径）
+ * 3. 全失败用 Icon (ImageVector) 作为最终占位
+ */
+@Composable
+private fun AppIconSafe(modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    val bitmap = remember {
+        try {
+            // 直接 decode 资源流，跳过 painterResource 的反射逻辑
+            val res: Resources = context.resources
+            // 先试 mipmap（新版 adaptive icon）
+            val mipmapId = res.getIdentifier("ic_launcher", "mipmap", context.packageName)
+            val drawableId = res.getIdentifier("ic_launcher", "drawable", context.packageName)
+            val targetId = when {
+                mipmapId != 0 -> mipmapId
+                drawableId != 0 -> drawableId
+                else -> 0
+            }
+            if (targetId != 0) {
+                res.openRawResource(targetId).use { input ->
+                    BitmapFactory.decodeStream(input)
+                }
+            } else {
+                null
+            }
+        } catch (e: Throwable) {
+            null
+        }
+    }
+
+    when {
+        bitmap != null -> {
+            Image(
+                bitmap = bitmap.asImageBitmap(),
+                contentDescription = stringResource(R.string.app_name),
+                modifier = modifier,
+                contentScale = ContentScale.Fit
+            )
+        }
+        else -> {
+            // 最终 fallback：没有位图时显示文字占位
+            Box(
+                modifier = modifier
+                    .clip(RoundedCornerShape(22.dp))
+                    .background(MaterialTheme.colorScheme.primary),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "W",
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 40.sp
+                )
+            }
+        }
+    }
 }

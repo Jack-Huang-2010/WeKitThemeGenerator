@@ -51,31 +51,4 @@ object ThemeColors {
             if (parts.size >= 2) "${parts[0]}.${parts[1]}" else parts[0]
         }
     }
-
-    /** Group label for display */
-    fun groupLabel(groupKey: String): String {
-        return when (groupKey) {
-            "chat.actionbar" -> "聊天 - 操作栏"
-            "chat.input" -> "聊天 - 输入框"
-            "chat.long_press_menu" -> "聊天 - 长按菜单"
-            "chat.red_packet" -> "聊天 - 红包"
-            "chat.history_tongue" -> "聊天 - 历史记录"
-            "chat.text_bubble" -> "聊天 - 文字气泡"
-            "chat.file_bubble" -> "聊天 - 文件气泡"
-            "chat.red_packet_bubble" -> "聊天 - 红包气泡"
-            "chat.transfer_bubble" -> "聊天 - 转账气泡"
-            "chat.link_text" -> "聊天 - 链接"
-            "chat.nickname_text" -> "聊天 - 昵称"
-            "chat.tips_text" -> "聊天 - 提示"
-            "chat.plus_panel" -> "聊天 - 加号面板"
-            "home.actionbar" -> "首页 - 操作栏"
-            "home.tabs" -> "首页 - 标签栏"
-            "home.item" -> "首页 - 列表项"
-            "home.conversation_item" -> "首页 - 会话项"
-            "home.taskbar" -> "首页 - 任务栏"
-            "settings.actionbar" -> "设置 - 操作栏"
-            "settings" -> "设置"
-            else -> groupKey
-        }
-    }
 }

@@ -51,8 +51,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.johnny.wekit.theme.data.ImageSlot
+import com.johnny.wekit.theme.util.DisplayName
 import com.johnny.wekit.theme.util.ImageSlotTree
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -177,9 +179,10 @@ private fun CategorySection(
     onPickImage: (String) -> Unit,
     onClearImage: (String) -> Unit
 ) {
+    val context = LocalContext.current
     var expanded by remember { mutableStateOf(category != "splash") }
     val replacedCount = slots.count { it.path in images }
-    val categoryName = ImageSlotTree.categoryDisplayName(category)
+    val categoryName = DisplayName.categoryName(context, category)
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -224,7 +227,7 @@ private fun CategorySection(
                 subPathGroups.forEach { (subPath, subSlots) ->
                     if (subPath.isNotEmpty()) {
                         Text(
-                            text = ImageSlotTree.subPathDisplayName(subPath),
+                            text = "▸ $subPath",
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.secondary,
                             modifier = Modifier.padding(start = 16.dp, top = 4.dp, bottom = 2.dp)
@@ -264,12 +267,19 @@ private fun CategorySection(
 
                             Spacer(modifier = Modifier.width(12.dp))
 
-                            // Path
-                            Text(
-                                text = slot.path,
-                                style = MaterialTheme.typography.bodyMedium,
-                                modifier = Modifier.weight(1f)
-                            )
+                            // Path: 显示中文（找不到则 fallback 原始 path）
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = DisplayName.imageSlotName(context, slot.path),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Medium
+                                )
+                                Text(
+                                    text = slot.path,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
 
                             // Status indicator
                             if (isReplaced) {

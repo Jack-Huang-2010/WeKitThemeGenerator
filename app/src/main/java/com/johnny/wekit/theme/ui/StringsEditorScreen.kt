@@ -28,6 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.johnny.wekit.theme.data.ThemeStrings
+import com.johnny.wekit.theme.util.DisplayName
 import org.json.JSONObject
 
 @Composable
@@ -117,7 +118,7 @@ fun StringsEditorScreen(
         // String fields
         ThemeStrings.ALL_KEYS.forEach { key ->
             val value = strings[key] ?: ""
-            val displayName = ThemeStrings.displayName(key)
+            val displayName = DisplayName.stringKeyName(context, key)
 
             OutlinedTextField(
                 value = value,
@@ -125,7 +126,14 @@ fun StringsEditorScreen(
                 label = { Text(displayName) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                placeholder = { Text(key) }
+                placeholder = { Text(key) },
+                supportingText = {
+                    Text(
+                        text = key,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             )
         }
     }

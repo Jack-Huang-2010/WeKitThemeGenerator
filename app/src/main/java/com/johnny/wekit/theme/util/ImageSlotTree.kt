@@ -147,30 +147,8 @@ object ImageSlotTree {
             }
     }
 
-    /** Category display names */
-    fun categoryDisplayName(category: String): String {
-        return when (category) {
-            "splash" -> "启动页"
-            "home" -> "首页"
-            "chat" -> "聊天"
-            "plus" -> "加号菜单"
-            "settings" -> "设置"
-            else -> category
-        }
-    }
-
-    /** Sub-path display names */
-    fun subPathDisplayName(subPath: String): String {
-        return when (subPath) {
-            "" -> "根目录"
-            "actionbar" -> "操作栏"
-            "tabs" -> "标签栏"
-            "items" -> "联系人项"
-            "discovery" -> "发现"
-            "me" -> "我"
-            "bubbles" -> "气泡"
-            "emoji_tabs" -> "表情标签"
-            else -> subPath
-        }
+    /** Group slots by category */
+    fun groupByCategory(): Map<String, List<ImageSlot>> {
+        return ALL_SLOTS.groupBy { it.category }
     }
 }
