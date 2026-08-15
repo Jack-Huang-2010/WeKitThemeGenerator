@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
+
 package com.johnny.wekit.theme.ui
 
 import android.content.Context
@@ -55,7 +57,6 @@ import com.johnny.wekit.theme.util.ImageSlotTree
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 fun ImageManagerScreen(
     images: Map<String, Uri>,
