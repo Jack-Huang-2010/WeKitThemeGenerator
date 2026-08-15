@@ -43,12 +43,11 @@ jobs:
         run: gradle assembleDebug
 
       - name: Build release APK
-        run: |
-          gradle assembleRelease \
-            -Pandroid.injected.signing.store.file=app/release.keystore \
-            -Pandroid.injected.signing.store.password=android \
-            -Pandroid.injected.signing.key.alias=release \
-            -Pandroid.injected.signing.key.password=android
+        run: gradle assembleRelease
+        env:
+          KEYSTORE_PASSWORD: android
+          KEY_ALIAS: release
+          KEY_PASSWORD: android
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v4

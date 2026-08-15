@@ -18,7 +18,7 @@ android {
 
     signingConfigs {
         create("release") {
-            val ksFile = file("release.keystore")
+            val ksFile = rootProject.file("app/release.keystore")
             if (ksFile.exists()) {
                 storeFile = ksFile
                 storePassword = System.getenv("KEYSTORE_PASSWORD") ?: "android"
@@ -35,7 +35,12 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.findByName("release")
+            // Fallback to debug signing if release keystore doesn't exist
+            signingConfig = if (rootProject.file("app/release.keystore").exists()) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
         }
     }
 
