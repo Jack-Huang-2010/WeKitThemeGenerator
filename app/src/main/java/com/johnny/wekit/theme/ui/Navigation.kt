@@ -1,6 +1,5 @@
 package com.johnny.wekit.theme.ui
 
-import androidx.activity.ExperimentalActivityApi
 import androidx.activity.compose.PredictiveBackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
@@ -32,6 +31,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -57,7 +57,6 @@ sealed class Screen(
     data object About : Screen("about", "关于", Icons.Filled.Info, Icons.Outlined.Info)
 }
 
-@OptIn(ExperimentalActivityApi::class)
 @Composable
 fun ThemeNavigation(viewModel: ThemeViewModel = viewModel()) {
     val project by viewModel.project.collectAsState()
