@@ -42,27 +42,27 @@ object ThemeExporter {
                 put("version", manifest.version)
                 put("description", manifest.description)
             }
-            addTextEntry(zos, "$themeName/manifest.json", manifestJson.toString(2))
+            addTextEntry(zos, "manifest.json", manifestJson.toString(2))
 
             // colors.json
             val colorsJson = JSONObject()
             colors.forEach { (key, value) ->
                 colorsJson.put(key, value)
             }
-            addTextEntry(zos, "$themeName/colors.json", colorsJson.toString(2))
+            addTextEntry(zos, "colors.json", colorsJson.toString(2))
 
             // strings.json
             val stringsJson = JSONObject()
             strings.forEach { (key, value) ->
                 stringsJson.put(key, value)
             }
-            addTextEntry(zos, "$themeName/strings.json", stringsJson.toString(2))
+            addTextEntry(zos, "strings.json", stringsJson.toString(2))
 
             // Images - only include replaced ones
             images.forEach { (path, uri) ->
                 try {
                     context.contentResolver.openInputStream(uri)?.use { input ->
-                        zos.putNextEntry(ZipEntry("$themeName/$path"))
+                        zos.putNextEntry(ZipEntry(path))
                         input.copyTo(zos)
                         zos.closeEntry()
                     }
