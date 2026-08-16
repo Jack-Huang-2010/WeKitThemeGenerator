@@ -5,6 +5,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Download
@@ -27,6 +28,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -55,6 +57,8 @@ sealed class Screen(
 fun ThemeNavigation(viewModel: ThemeViewModel = viewModel()) {
     val navController = rememberNavController()
     val project by viewModel.project.collectAsState()
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentDestination = navBackStackEntry?.destination
 
     val screens = listOf(
         Screen.Theme,
@@ -67,8 +71,6 @@ fun ThemeNavigation(viewModel: ThemeViewModel = viewModel()) {
     Scaffold(
         bottomBar = {
             NavigationBar {
-                val navBackStackEntry by navController.currentBackStackEntryAsState()
-                val currentDestination = navBackStackEntry?.destination
                 screens.forEach { screen ->
                     val selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true
                     NavigationBarItem(
@@ -98,7 +100,36 @@ fun ThemeNavigation(viewModel: ThemeViewModel = viewModel()) {
         NavHost(
             navController = navController,
             startDestination = Screen.Theme.route,
-            modifier = Modifier.padding(innerPadding),
+            modifier = Modifier
+                .padding(innerPadding)
+                .pointerInput(currentDestination?.route) {
+                    val swipeThreshold = 100.dp.toPx()
+                    var totalDrag = 0f
+                    detectHorizontalDragGestures(
+                        onDragEnd = {
+                            val currentIndex = screens.indexOfFirst { it.route == currentDestination?.route }
+                            val targetIndex = when {
+                                currentIndex < 0 -> currentIndex
+                                totalDrag <= -swipeThreshold -> currentIndex + 1
+                                totalDrag >= swipeThreshold -> currentIndex - 1
+                                else -> currentIndex
+                            }
+                            if (targetIndex in screens.indices && targetIndex != currentIndex) {
+                                navController.navigate(screens[targetIndex].route) {
+                                    popUpTo(navController.graph.findStartDestination().id) {
+                                        saveState = true
+                                    }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
+                            }
+                            totalDrag = 0f
+                        }
+                    ) { change, dragAmount ->
+                        totalDrag += dragAmount
+                        change.consume()
+                    }
+                },
             enterTransition = {
                 val fromRoute = initialState.destination.route
                 val toRoute = targetState.destination.route
