@@ -40,6 +40,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -53,6 +54,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.johnny.wekit.theme.data.ThemeColors
 import com.johnny.wekit.theme.util.DisplayName
+import kotlinx.coroutines.launch
 import org.json.JSONObject
 
 @Composable
@@ -271,6 +273,7 @@ private fun TopBarAction(
     onClick: () -> Unit
 ) {
     val tooltipState = rememberTooltipState()
+    val scope = rememberCoroutineScope()
     TooltipBox(
         positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
         tooltip = { Text(tooltip) },
@@ -282,7 +285,7 @@ private fun TopBarAction(
                     tryAwaitRelease()
                     tooltipState.dismiss()
                 },
-                onLongPress = { tooltipState.show() }
+                onLongPress = { scope.launch { tooltipState.show() } }
             )
         }
         when (variant) {
