@@ -6,6 +6,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,12 +20,22 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.FileDownload
+import androidx.compose.material.icons.filled.FileUpload
+import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedIconButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -34,6 +45,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -120,21 +133,26 @@ fun ColorsEditorScreen(
         ) {
             Text("颜色编辑", style = MaterialTheme.typography.headlineMedium)
             Row {
-                OutlinedButton(onClick = onResetColors) {
-                    Text("重置")
-                }
+                TopBarAction(
+                    tooltip = "重置",
+                    icon = Icons.Outlined.Refresh,
+                    variant = ActionVariant.Outlined,
+                    onClick = onResetColors
+                )
                 Spacer(modifier = Modifier.width(8.dp))
-                OutlinedButton(onClick = {
-                    importLauncher.launch(arrayOf("application/json"))
-                }) {
-                    Text("导入")
-                }
+                TopBarAction(
+                    tooltip = "导入",
+                    icon = Icons.Filled.FileUpload,
+                    variant = ActionVariant.Filled,
+                    onClick = { importLauncher.launch(arrayOf("application/json")) }
+                )
                 Spacer(modifier = Modifier.width(8.dp))
-                OutlinedButton(onClick = {
-                    exportLauncher.launch("colors.json")
-                }) {
-                    Text("导出")
-                }
+                TopBarAction(
+                    tooltip = "导出",
+                    icon = Icons.Filled.FileDownload,
+                    variant = ActionVariant.Filled,
+                    onClick = { exportLauncher.launch("colors.json") }
+                )
             }
         }
 
@@ -239,5 +257,48 @@ private fun parseHexColor(hex: String): Int {
         6 -> "FF$clean".toLong(16).toInt()
         8 -> clean.toLong(16).toInt()
         else -> 0xFF000000.toInt()
+    }
+}
+
+private enum class ActionVariant { Filled, Outlined }
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun TopBarAction(
+    tooltip: String,
+    icon: ImageVector,
+    variant: ActionVariant,
+    onClick: () -> Unit
+) {
+    val tooltipState = rememberTooltipState()
+    TooltipBox(
+        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+        tooltip = { Text(tooltip) },
+        state = tooltipState
+    ) {
+        val longPressModifier = Modifier.pointerInput(Unit) {
+            detectTapGestures(
+                onPress = {
+                    tryAwaitRelease()
+                    tooltipState.dismiss()
+                },
+                onLongPress = { tooltipState.show() }
+            )
+        }
+        when (variant) {
+            ActionVariant.Filled -> FilledIconButton(
+                onClick = onClick,
+                modifier = longPressModifier
+            ) {
+                Icon(icon, contentDescription = tooltip)
+            }
+
+            ActionVariant.Outlined -> OutlinedIconButton(
+                onClick = onClick,
+                modifier = longPressModifier
+            ) {
+                Icon(icon, contentDescription = tooltip)
+            }
+        }
     }
 }
