@@ -59,8 +59,7 @@ fun ThemeNavigation(viewModel: ThemeViewModel = viewModel()) {
         Screen.Colors,
         Screen.Strings,
         Screen.Images,
-        Screen.Export,
-        Screen.About
+        Screen.Export
     )
 
     Scaffold(
@@ -126,7 +125,8 @@ fun ThemeNavigation(viewModel: ThemeViewModel = viewModel()) {
             composable(Screen.Theme.route) {
                 ThemeEditorScreen(
                     manifest = project.manifest,
-                    onManifestUpdate = { viewModel.updateManifest(it) }
+                    onManifestUpdate = { viewModel.updateManifest(it) },
+                    onNavigateToAbout = { navController.navigate(Screen.About.route) }
                 )
             }
             composable(Screen.Colors.route) {
@@ -164,7 +164,8 @@ fun ThemeNavigation(viewModel: ThemeViewModel = viewModel()) {
                             strings = project.strings,
                             images = project.images
                         )
-                    }
+                    },
+                    onNavigateToAbout = { navController.navigate(Screen.About.route) }
                 )
             }
             composable(Screen.About.route) {

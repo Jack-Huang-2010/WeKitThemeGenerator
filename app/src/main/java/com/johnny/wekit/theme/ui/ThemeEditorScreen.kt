@@ -2,6 +2,7 @@ package com.johnny.wekit.theme.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,6 +15,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.johnny.wekit.theme.data.ThemeManifest
@@ -21,7 +23,8 @@ import com.johnny.wekit.theme.data.ThemeManifest
 @Composable
 fun ThemeEditorScreen(
     manifest: ThemeManifest,
-    onManifestUpdate: (ThemeManifest) -> Unit
+    onManifestUpdate: (ThemeManifest) -> Unit,
+    onNavigateToAbout: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -30,11 +33,19 @@ fun ThemeEditorScreen(
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text(
-            text = "主题信息",
-            style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.padding(vertical = 8.dp)
-        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "主题信息",
+                style = MaterialTheme.typography.headlineMedium,
+                modifier = Modifier.weight(1f)
+            )
+            AboutMenuButton(onNavigateToAbout = onNavigateToAbout)
+        }
 
         OutlinedTextField(
             value = manifest.name,

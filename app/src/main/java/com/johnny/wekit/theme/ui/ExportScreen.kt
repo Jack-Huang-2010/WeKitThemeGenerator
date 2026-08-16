@@ -53,7 +53,8 @@ import java.io.File
 @Composable
 fun ExportScreen(
     project: ThemeProject,
-    onExport: (Context) -> File
+    onExport: (Context) -> File,
+    onNavigateToAbout: () -> Unit
 ) {
     val context = LocalContext.current
     var exportedFile by remember { mutableStateOf<File?>(null) }
@@ -67,11 +68,19 @@ fun ExportScreen(
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text(
-            text = "生成导出",
-            style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.padding(vertical = 8.dp)
-        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "生成导出",
+                style = MaterialTheme.typography.headlineMedium,
+                modifier = Modifier.weight(1f)
+            )
+            AboutMenuButton(onNavigateToAbout = onNavigateToAbout)
+        }
 
         // 主题概览
         Card(
