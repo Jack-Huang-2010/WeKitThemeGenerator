@@ -7,6 +7,11 @@ import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.TextFields
+import androidx.compose.material.icons.outlined.Download
+import androidx.compose.material.icons.outlined.Image
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Palette
+import androidx.compose.material.icons.outlined.TextFields
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -27,13 +32,18 @@ import androidx.navigation.compose.rememberNavController
 import com.johnny.wekit.theme.util.ThemeExporter
 import com.johnny.wekit.theme.viewmodel.ThemeViewModel
 
-sealed class Screen(val route: String, val label: String, val icon: ImageVector) {
-    data object Theme : Screen("theme", "主题信息", Icons.Default.Info)
-    data object Colors : Screen("colors", "颜色", Icons.Default.Palette)
-    data object Strings : Screen("strings", "字符串", Icons.Default.TextFields)
-    data object Images : Screen("images", "图片", Icons.Default.Image)
-    data object Export : Screen("export", "导出", Icons.Default.Download)
-    data object About : Screen("about", "关于", Icons.Default.Info)
+sealed class Screen(
+    val route: String,
+    val label: String,
+    val icon: ImageVector,
+    val iconOutlined: ImageVector
+) {
+    data object Theme : Screen("theme", "主题信息", Icons.Filled.Info, Icons.Outlined.Info)
+    data object Colors : Screen("colors", "颜色", Icons.Filled.Palette, Icons.Outlined.Palette)
+    data object Strings : Screen("strings", "字符串", Icons.Filled.TextFields, Icons.Outlined.TextFields)
+    data object Images : Screen("images", "图片", Icons.Filled.Image, Icons.Outlined.Image)
+    data object Export : Screen("export", "导出", Icons.Filled.Download, Icons.Outlined.Download)
+    data object About : Screen("about", "关于", Icons.Filled.Info, Icons.Outlined.Info)
 }
 
 @Composable
@@ -56,11 +66,17 @@ fun ThemeNavigation(viewModel: ThemeViewModel = viewModel()) {
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentDestination = navBackStackEntry?.destination
                 screens.forEach { screen ->
+                    val selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true
                     NavigationBarItem(
-                        icon = { Icon(screen.icon, contentDescription = screen.label) },
+                        icon = {
+                            Icon(
+                                imageVector = if (selected) screen.icon else screen.iconOutlined,
+                                contentDescription = screen.label
+                            )
+                        },
                         label = { Text(screen.label) },
                         alwaysShowLabel = false,
-                        selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true,
+                        selected = selected,
                         onClick = {
                             navController.navigate(screen.route) {
                                 popUpTo(navController.graph.findStartDestination().id) {
