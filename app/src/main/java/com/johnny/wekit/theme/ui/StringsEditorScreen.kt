@@ -14,8 +14,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.FileDownload
+import androidx.compose.material.icons.filled.FileUpload
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -95,21 +98,23 @@ fun StringsEditorScreen(
         ) {
             Text("字符串编辑", style = MaterialTheme.typography.headlineMedium)
             Row {
-                OutlinedButton(onClick = onResetStrings) {
-                    Text("重置")
-                }
+                TopBarAction(
+                    tooltip = "重置",
+                    icon = Icons.Filled.Refresh,
+                    onClick = onResetStrings
+                )
                 Spacer(modifier = Modifier.width(8.dp))
-                OutlinedButton(onClick = {
-                    importLauncher.launch(arrayOf("application/json"))
-                }) {
-                    Text("导入")
-                }
+                TopBarAction(
+                    tooltip = "导入",
+                    icon = Icons.Filled.FileUpload,
+                    onClick = { importLauncher.launch(arrayOf("application/json")) }
+                )
                 Spacer(modifier = Modifier.width(8.dp))
-                OutlinedButton(onClick = {
-                    exportLauncher.launch("strings.json")
-                }) {
-                    Text("导出")
-                }
+                TopBarAction(
+                    tooltip = "导出",
+                    icon = Icons.Filled.FileDownload,
+                    onClick = { exportLauncher.launch("strings.json") }
+                )
             }
         }
 
