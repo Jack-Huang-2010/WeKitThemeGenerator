@@ -10,6 +10,13 @@ import android.provider.OpenableColumns
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -30,7 +37,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material3.Card
@@ -48,6 +54,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -185,6 +192,11 @@ private fun CategorySection(
     var expanded by remember { mutableStateOf(category != "splash") }
     val replacedCount = slots.count { it.path in images }
     val categoryName = DisplayName.categoryName(context, category)
+    val rotation by animateFloatAsState(
+        targetValue = if (expanded) 180f else 0f,
+        animationSpec = tween(durationMillis = 250),
+        label = "expandRotation"
+    )
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -214,103 +226,112 @@ private fun CategorySection(
                 )
                 Spacer(modifier = Modifier.width(4.dp))
                 Icon(
-                    imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                    contentDescription = if (expanded) "收起" else "展开"
+                    imageVector = Icons.Default.ExpandMore,
+                    contentDescription = if (expanded) "收起" else "展开",
+                    modifier = Modifier.rotate(rotation)
                 )
             }
 
-            if (expanded) {
-                // Sub-path groups
-                val subPathGroups = slots.groupBy { slot ->
-                    val parts = slot.path.split("/")
-                    if (parts.size > 2) parts[1] else ""
-                }
-
-                subPathGroups.forEach { (subPath, subSlots) ->
-                    if (subPath.isNotEmpty()) {
-                        Text(
-                            text = "▸ $subPath",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.secondary,
-                            modifier = Modifier.padding(start = 16.dp, top = 4.dp, bottom = 2.dp)
-                        )
+            AnimatedVisibility(
+                visible = expanded,
+                enter = expandVertically(tween(durationMillis = 250)) + fadeIn(tween(durationMillis = 250)),
+                exit = shrinkVertically(tween(durationMillis = 250)) + fadeOut(tween(durationMillis = 150))
+            ) {
+                Column {
+                    // Sub-path groups
+                    val subPathGroups = slots.groupBy { slot ->
+                        val parts = slot.path.split("/")
+                        if (parts.size > 2) parts[1] else ""
                     }
 
-                    subSlots.forEach { slot ->
-                        val isReplaced = slot.path in images
-                        val imageUri = images[slot.path]
+                    subPathGroups.forEach { (subPath, subSlots) ->
+                        if (subPath.isNotEmpty()) {
+                            Text(
+                                text = "▸ $subPath",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.secondary,
+                                modifier = Modifier.padding(start = 16.dp, top = 4.dp, bottom = 2.dp)
+                            )
+                        }
 
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .combinedClickable(
-                                    onClick = { onPickImage(slot.path) },
-                                    onLongClick = {
-                                        if (isReplaced) onClearImage(slot.path)
-                                    }
-                                )
-                                .padding(horizontal = 16.dp, vertical = 6.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            // Thumbnail
-                            if (imageUri != null) {
-                                ThumbnailImage(
-                                    uri = imageUri,
-                                    modifier = Modifier.size(36.dp)
-                                )
-                            } else {
-                                Box(
-                                    modifier = Modifier
-                                        .size(36.dp)
-                                        .clip(MaterialTheme.shapes.small)
-                                        .background(MaterialTheme.colorScheme.surfaceVariant)
-                                )
+                        subSlots.forEach { slot ->
+                            val isReplaced = slot.path in images
+                            val imageUri = images[slot.path]
+
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .combinedClickable(
+                                        onClick = { onPickImage(slot.path) },
+                                        onLongClick = {
+                                            if (isReplaced) onClearImage(slot.path)
+                                        }
+                                    )
+                                    .padding(horizontal = 16.dp, vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                // Thumbnail
+                                if (imageUri != null) {
+                                    ThumbnailImage(
+                                        uri = imageUri,
+                                        modifier = Modifier.size(36.dp)
+                                    )
+                                } else {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(36.dp)
+                                            .clip(MaterialTheme.shapes.small)
+                                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                                    )
+                                }
+
+                                Spacer(modifier = Modifier.width(12.dp))
+
+                                // Path: 显示中文（找不到则 fallback 原始 path）
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = DisplayName.imageSlotName(context, slot.path),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                    Text(
+                                        text = slot.path,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+
+                                // Status indicator
+                                if (isReplaced) {
+                                    Icon(
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = "已替换",
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                } else {
+                                    Icon(
+                                        imageVector = Icons.Default.Close,
+                                        contentDescription = "未替换",
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
                             }
 
-                            Spacer(modifier = Modifier.width(12.dp))
-
-                            // Path: 显示中文（找不到则 fallback 原始 path）
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = DisplayName.imageSlotName(context, slot.path),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.Medium
-                                )
-                                Text(
-                                    text = slot.path,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-
-                            // Status indicator
-                            if (isReplaced) {
-                                Icon(
-                                    imageVector = Icons.Default.Check,
-                                    contentDescription = "已替换",
-                                    tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                            } else {
-                                Icon(
-                                    imageVector = Icons.Default.Close,
-                                    contentDescription = "未替换",
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                                    modifier = Modifier.size(20.dp)
-                                )
+                            if (slot != subSlots.last()) {
+                                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
                             }
                         }
 
-                        if (slot != subSlots.last()) {
-                            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+                        if (subPath != subPathGroups.keys.last()) {
+                            Spacer(modifier = Modifier.height(4.dp))
                         }
                     }
 
-                    if (subPath != subPathGroups.keys.last()) {
-                        Spacer(modifier = Modifier.height(4.dp))
-                    }
                 }
             }
+
         }
     }
 }
