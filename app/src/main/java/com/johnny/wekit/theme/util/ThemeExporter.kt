@@ -58,6 +58,17 @@ object ThemeExporter {
             }
             addTextEntry(zos, "strings.json", stringsJson.toString(2))
 
+            // 场景目录骨架（严格按模板格式：home/、chat/、chat/bubbles/、plus/、settings/、splash/ 等，
+            // 即使没有替换图片也保留目录结构）
+            ImageSlotTree.ALL_SLOTS
+                .map { it.path.substringBeforeLast("/") + "/" }
+                .distinct()
+                .sorted()
+                .forEach { dir ->
+                    zos.putNextEntry(ZipEntry(dir))
+                    zos.closeEntry()
+                }
+
             // Images - only include replaced ones
             images.forEach { (path, uri) ->
                 try {
