@@ -23,15 +23,14 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.FileUpload
-import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedIconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TooltipBox
 import androidx.compose.material3.TooltipDefaults
@@ -137,22 +136,19 @@ fun ColorsEditorScreen(
             Row {
                 TopBarAction(
                     tooltip = "重置",
-                    icon = Icons.Outlined.Refresh,
-                    variant = ActionVariant.Outlined,
+                    icon = Icons.Filled.Refresh,
                     onClick = onResetColors
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 TopBarAction(
                     tooltip = "导入",
                     icon = Icons.Filled.FileUpload,
-                    variant = ActionVariant.Filled,
                     onClick = { importLauncher.launch(arrayOf("application/json")) }
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 TopBarAction(
                     tooltip = "导出",
                     icon = Icons.Filled.FileDownload,
-                    variant = ActionVariant.Filled,
                     onClick = { exportLauncher.launch("colors.json") }
                 )
             }
@@ -262,14 +258,11 @@ private fun parseHexColor(hex: String): Int {
     }
 }
 
-private enum class ActionVariant { Filled, Outlined }
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TopBarAction(
     tooltip: String,
     icon: ImageVector,
-    variant: ActionVariant,
     onClick: () -> Unit
 ) {
     val tooltipState = rememberTooltipState()
@@ -279,29 +272,19 @@ private fun TopBarAction(
         tooltip = { Text(tooltip) },
         state = tooltipState
     ) {
-        val longPressModifier = Modifier.pointerInput(Unit) {
-            detectTapGestures(
-                onPress = {
-                    tryAwaitRelease()
-                    tooltipState.dismiss()
-                },
-                onLongPress = { scope.launch { tooltipState.show() } }
-            )
-        }
-        when (variant) {
-            ActionVariant.Filled -> FilledIconButton(
-                onClick = onClick,
-                modifier = longPressModifier
-            ) {
-                Icon(icon, contentDescription = tooltip)
+        IconButton(
+            onClick = onClick,
+            modifier = Modifier.pointerInput(Unit) {
+                detectTapGestures(
+                    onPress = {
+                        tryAwaitRelease()
+                        tooltipState.dismiss()
+                    },
+                    onLongPress = { scope.launch { tooltipState.show() } }
+                )
             }
-
-            ActionVariant.Outlined -> OutlinedIconButton(
-                onClick = onClick,
-                modifier = longPressModifier
-            ) {
-                Icon(icon, contentDescription = tooltip)
-            }
+        ) {
+            Icon(icon, contentDescription = tooltip)
         }
     }
 }
