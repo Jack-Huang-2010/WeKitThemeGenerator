@@ -63,11 +63,15 @@ fun ExportScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
+            .padding(horizontal = 16.dp, bottom = 16.dp)
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text("生成导出", style = MaterialTheme.typography.headlineMedium)
+        Text(
+            text = "生成导出",
+            style = MaterialTheme.typography.headlineMedium,
+            modifier = Modifier.padding(vertical = 8.dp)
+        )
 
         // 主题概览
         Card(

@@ -128,13 +128,13 @@ fun ColorsEditorScreen(
                     icon = Icons.Filled.Refresh,
                     onClick = onResetColors
                 )
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(4.dp))
                 TopBarAction(
                     tooltip = "导入",
                     icon = Icons.Filled.FileUpload,
                     onClick = { importLauncher.launch(arrayOf("application/json")) }
                 )
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(4.dp))
                 TopBarAction(
                     tooltip = "导出",
                     icon = Icons.Filled.FileDownload,

@@ -26,11 +26,15 @@ fun ThemeEditorScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
+            .padding(horizontal = 16.dp, bottom = 16.dp)
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text(text = "主题信息", style = MaterialTheme.typography.headlineMedium)
+        Text(
+            text = "主题信息",
+            style = MaterialTheme.typography.headlineMedium,
+            modifier = Modifier.padding(vertical = 8.dp)
+        )
 
         OutlinedTextField(
             value = manifest.name,
