@@ -86,13 +86,14 @@ fun StringsEditorScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         // Top bar
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -129,7 +130,9 @@ fun StringsEditorScreen(
                 value = value,
                 onValueChange = { onStringUpdate(key, it) },
                 label = { Text(displayName) },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
                 singleLine = true,
                 placeholder = { Text(key) },
                 supportingText = {
