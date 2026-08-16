@@ -1,6 +1,8 @@
 package com.johnny.wekit.theme.ui
 
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.padding
@@ -98,28 +100,68 @@ fun ThemeNavigation(viewModel: ThemeViewModel = viewModel()) {
             startDestination = Screen.Theme.route,
             modifier = Modifier.padding(innerPadding),
             enterTransition = {
-                slideInHorizontally(
-                    initialOffsetX = { it },
-                    animationSpec = tween(durationMillis = 300)
-                )
+                val fromRoute = initialState.destination.route
+                val toRoute = targetState.destination.route
+                val involvesAbout = fromRoute == Screen.About.route || toRoute == Screen.About.route
+                if (involvesAbout) {
+                    fadeIn(animationSpec = tween(durationMillis = 300))
+                } else if (screens.indexOfFirst { it.route == toRoute } >
+                    screens.indexOfFirst { it.route == fromRoute }
+                ) {
+                    slideInHorizontally(
+                        initialOffsetX = { it },
+                        animationSpec = tween(durationMillis = 300)
+                    )
+                } else {
+                    slideInHorizontally(
+                        initialOffsetX = { -it },
+                        animationSpec = tween(durationMillis = 300)
+                    )
+                }
             },
             exitTransition = {
-                slideOutHorizontally(
-                    targetOffsetX = { -it },
-                    animationSpec = tween(durationMillis = 300)
-                )
+                val fromRoute = initialState.destination.route
+                val toRoute = targetState.destination.route
+                val involvesAbout = fromRoute == Screen.About.route || toRoute == Screen.About.route
+                if (involvesAbout) {
+                    fadeOut(animationSpec = tween(durationMillis = 300))
+                } else if (screens.indexOfFirst { it.route == toRoute } >
+                    screens.indexOfFirst { it.route == fromRoute }
+                ) {
+                    slideOutHorizontally(
+                        targetOffsetX = { -it },
+                        animationSpec = tween(durationMillis = 300)
+                    )
+                } else {
+                    slideOutHorizontally(
+                        targetOffsetX = { it },
+                        animationSpec = tween(durationMillis = 300)
+                    )
+                }
             },
             popEnterTransition = {
-                slideInHorizontally(
-                    initialOffsetX = { -it },
-                    animationSpec = tween(durationMillis = 300)
-                )
+                val involvesAbout = initialState.destination.route == Screen.About.route ||
+                    targetState.destination.route == Screen.About.route
+                if (involvesAbout) {
+                    fadeIn(animationSpec = tween(durationMillis = 300))
+                } else {
+                    slideInHorizontally(
+                        initialOffsetX = { -it },
+                        animationSpec = tween(durationMillis = 300)
+                    )
+                }
             },
             popExitTransition = {
-                slideOutHorizontally(
-                    targetOffsetX = { it },
-                    animationSpec = tween(durationMillis = 300)
-                )
+                val involvesAbout = initialState.destination.route == Screen.About.route ||
+                    targetState.destination.route == Screen.About.route
+                if (involvesAbout) {
+                    fadeOut(animationSpec = tween(durationMillis = 300))
+                } else {
+                    slideOutHorizontally(
+                        targetOffsetX = { it },
+                        animationSpec = tween(durationMillis = 300)
+                    )
+                }
             }
         ) {
             composable(Screen.Theme.route) {
