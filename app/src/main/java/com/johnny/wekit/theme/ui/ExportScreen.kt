@@ -4,6 +4,8 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -49,6 +51,7 @@ import com.johnny.wekit.theme.data.ThemeProject
 import com.johnny.wekit.theme.util.ImageSlotTree
 import com.johnny.wekit.theme.util.ThemeExporter
 import java.io.File
+import java.io.FileInputStream
 
 @Composable
 fun ExportScreen(
@@ -60,6 +63,28 @@ fun ExportScreen(
     var exportedFile by remember { mutableStateOf<File?>(null) }
     var exportedDownloadsUri by remember { mutableStateOf<Uri?>(null) }
     var isExporting by remember { mutableStateOf(false) }
+
+    // 系统保存对话框（SAF）：用户选择保存位置，无需任何存储权限
+    val zipSaveLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/zip")
+    ) { uri: Uri? ->
+        uri?.let { target ->
+            val file = exportedFile
+            if (file != null) {
+                try {
+                    context.contentResolver.openOutputStream(target)?.use { output ->
+                        FileInputStream(file).use { input ->
+                            input.copyTo(output)
+                        }
+                    }
+                    exportedDownloadsUri = target
+                    Toast.makeText(context, "已保存", Toast.LENGTH_SHORT).show()
+                } catch (e: Exception) {
+                    Toast.makeText(context, "保存失败: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -197,20 +222,11 @@ fun ExportScreen(
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    // 操作按钮
+                    // 操作按钮：系统保存对话框（用户选择位置，无需权限）
                     Button(
                         onClick = {
-                            val uri = ThemeExporter.saveToDownloads(context, file)
-                            if (uri != null) {
-                                exportedDownloadsUri = uri
-                                Toast.makeText(
-                                    context,
-                                    "已保存到 Downloads 目录",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            } else {
-                                Toast.makeText(context, "保存失败", Toast.LENGTH_SHORT).show()
-                            }
+                            val themeName = project.manifest.name.ifBlank { "theme" }
+                            zipSaveLauncher.launch("$themeName.wekit.zip")
                         },
                         modifier = Modifier.fillMaxWidth()
                     ) {
@@ -220,12 +236,12 @@ fun ExportScreen(
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("保存到 Downloads 目录")
+                        Text("保存主题包…")
                     }
 
-                    exportedDownloadsUri?.let { uri ->
+                    exportedDownloadsUri?.let {
                         Text(
-                            "💾 已保存，可通过文件管理器查看：\n${uri.path}",
+                            "💾 已保存到所选位置，可通过文件管理器查看",
                             fontSize = 11.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(vertical = 4.dp)
