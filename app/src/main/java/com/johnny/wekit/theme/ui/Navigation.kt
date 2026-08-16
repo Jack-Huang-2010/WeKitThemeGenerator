@@ -1,6 +1,7 @@
 package com.johnny.wekit.theme.ui
 
-import androidx.activity.compose.BackHandler
+import androidx.activity.ExperimentalActivityApi
+import androidx.activity.compose.PredictiveBackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -27,6 +28,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -34,6 +36,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.johnny.wekit.theme.util.ThemeExporter
@@ -54,6 +57,7 @@ sealed class Screen(
     data object About : Screen("about", "关于", Icons.Filled.Info, Icons.Outlined.Info)
 }
 
+@OptIn(ExperimentalActivityApi::class)
 @Composable
 fun ThemeNavigation(viewModel: ThemeViewModel = viewModel()) {
     val project by viewModel.project.collectAsState()
@@ -67,6 +71,7 @@ fun ThemeNavigation(viewModel: ThemeViewModel = viewModel()) {
     )
     val pagerState = rememberPagerState(pageCount = { screens.size })
     var aboutVisible by rememberSaveable { mutableStateOf(false) }
+    var backProgress by remember { mutableStateOf(0f) }
 
     Scaffold(
         bottomBar = {
@@ -147,12 +152,39 @@ fun ThemeNavigation(viewModel: ThemeViewModel = viewModel()) {
                 enter = fadeIn(tween(durationMillis = 250)),
                 exit = fadeOut(tween(durationMillis = 250))
             ) {
-                AboutScreen(onBack = { aboutVisible = false })
+                // 返回手势进行中：透明度跟手（1 → 0）
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .graphicsLayer {
+                            alpha = 1f - backProgress
+                        }
+                ) {
+                    AboutScreen(onBack = { aboutVisible = false })
+                }
             }
         }
     }
 
-    BackHandler(enabled = aboutVisible) {
-        aboutVisible = false
+    // 关于页打开时重置返回进度
+    LaunchedEffect(aboutVisible) {
+        if (aboutVisible) backProgress = 0f
+    }
+
+    // 预测性返回：返回手势进行中 about 浮层跟手淡出；手势提交关闭，滑回取消
+    PredictiveBackHandler(enabled = aboutVisible) { progress ->
+        var committed = false
+        try {
+            progress.collect { backEvent ->
+                backProgress = backEvent.progress
+            }
+            committed = true
+        } finally {
+            if (committed) {
+                aboutVisible = false
+            } else {
+                backProgress = 0f
+            }
+        }
     }
 }
