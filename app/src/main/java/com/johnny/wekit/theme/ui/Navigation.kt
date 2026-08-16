@@ -1,12 +1,15 @@
 package com.johnny.wekit.theme.ui
 
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Image
@@ -26,19 +29,16 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavDestination.Companion.hierarchy
-import androidx.navigation.NavGraph.Companion.findStartDestination
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.rememberNavController
 import com.johnny.wekit.theme.util.ThemeExporter
 import com.johnny.wekit.theme.viewmodel.ThemeViewModel
+import kotlinx.coroutines.launch
 
 sealed class Screen(
     val route: String,
@@ -56,11 +56,8 @@ sealed class Screen(
 
 @Composable
 fun ThemeNavigation(viewModel: ThemeViewModel = viewModel()) {
-    val navController = rememberNavController()
     val project by viewModel.project.collectAsState()
-    val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentDestination = navBackStackEntry?.destination
-
+    val scope = rememberCoroutineScope()
     val screens = listOf(
         Screen.Theme,
         Screen.Colors,
@@ -68,12 +65,14 @@ fun ThemeNavigation(viewModel: ThemeViewModel = viewModel()) {
         Screen.Images,
         Screen.Export
     )
+    val pagerState = rememberPagerState(pageCount = { screens.size })
+    var aboutVisible by rememberSaveable { mutableStateOf(false) }
 
     Scaffold(
         bottomBar = {
             NavigationBar {
-                screens.forEach { screen ->
-                    val selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true
+                screens.forEachIndexed { index, screen ->
+                    val selected = pagerState.currentPage == index
                     NavigationBarItem(
                         icon = {
                             Icon(
@@ -85,166 +84,75 @@ fun ThemeNavigation(viewModel: ThemeViewModel = viewModel()) {
                         alwaysShowLabel = false,
                         selected = selected,
                         onClick = {
-                            navController.navigate(screen.route) {
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
-                                }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
+                            aboutVisible = false
+                            scope.launch { pagerState.animateScrollToPage(index) }
                         }
                     )
                 }
             }
         }
     ) { innerPadding ->
-        NavHost(
-            navController = navController,
-            startDestination = Screen.Theme.route,
+        Box(
             modifier = Modifier
+                .fillMaxSize()
                 .padding(innerPadding)
-                .pointerInput(currentDestination?.route) {
-                    val swipeThreshold = 100.dp.toPx()
-                    var totalDrag = 0f
-                    detectHorizontalDragGestures(
-                        onDragEnd = {
-                            val currentIndex = screens.indexOfFirst { it.route == currentDestination?.route }
-                            val targetIndex = when {
-                                currentIndex < 0 -> currentIndex
-                                totalDrag <= -swipeThreshold -> currentIndex + 1
-                                totalDrag >= swipeThreshold -> currentIndex - 1
-                                else -> currentIndex
-                            }
-                            if (targetIndex in screens.indices && targetIndex != currentIndex) {
-                                navController.navigate(screens[targetIndex].route) {
-                                    popUpTo(navController.graph.findStartDestination().id) {
-                                        saveState = true
-                                    }
-                                    launchSingleTop = true
-                                    restoreState = true
-                                }
-                            }
-                            totalDrag = 0f
-                        }
-                    ) { change, dragAmount ->
-                        totalDrag += dragAmount
-                        change.consume()
-                    }
-                },
-            enterTransition = {
-                val fromRoute = initialState.destination.route
-                val toRoute = targetState.destination.route
-                val involvesAbout = fromRoute == Screen.About.route || toRoute == Screen.About.route
-                if (involvesAbout) {
-                    fadeIn(animationSpec = tween(durationMillis = 300))
-                } else if (screens.indexOfFirst { it.route == toRoute } >
-                    screens.indexOfFirst { it.route == fromRoute }
-                ) {
-                    slideInHorizontally(
-                        initialOffsetX = { it },
-                        animationSpec = tween(durationMillis = 300)
-                    )
-                } else {
-                    slideInHorizontally(
-                        initialOffsetX = { -it },
-                        animationSpec = tween(durationMillis = 300)
-                    )
-                }
-            },
-            exitTransition = {
-                val fromRoute = initialState.destination.route
-                val toRoute = targetState.destination.route
-                val involvesAbout = fromRoute == Screen.About.route || toRoute == Screen.About.route
-                if (involvesAbout) {
-                    fadeOut(animationSpec = tween(durationMillis = 300))
-                } else if (screens.indexOfFirst { it.route == toRoute } >
-                    screens.indexOfFirst { it.route == fromRoute }
-                ) {
-                    slideOutHorizontally(
-                        targetOffsetX = { -it },
-                        animationSpec = tween(durationMillis = 300)
-                    )
-                } else {
-                    slideOutHorizontally(
-                        targetOffsetX = { it },
-                        animationSpec = tween(durationMillis = 300)
-                    )
-                }
-            },
-            popEnterTransition = {
-                val involvesAbout = initialState.destination.route == Screen.About.route ||
-                    targetState.destination.route == Screen.About.route
-                if (involvesAbout) {
-                    fadeIn(animationSpec = tween(durationMillis = 300))
-                } else {
-                    slideInHorizontally(
-                        initialOffsetX = { -it },
-                        animationSpec = tween(durationMillis = 300)
-                    )
-                }
-            },
-            popExitTransition = {
-                val involvesAbout = initialState.destination.route == Screen.About.route ||
-                    targetState.destination.route == Screen.About.route
-                if (involvesAbout) {
-                    fadeOut(animationSpec = tween(durationMillis = 300))
-                } else {
-                    slideOutHorizontally(
-                        targetOffsetX = { it },
-                        animationSpec = tween(durationMillis = 300)
-                    )
-                }
-            }
         ) {
-            composable(Screen.Theme.route) {
-                ThemeEditorScreen(
-                    manifest = project.manifest,
-                    onManifestUpdate = { viewModel.updateManifest(it) },
-                    onNavigateToAbout = { navController.navigate(Screen.About.route) }
-                )
+            HorizontalPager(
+                state = pagerState,
+                userScrollEnabled = !aboutVisible
+            ) { page ->
+                when (screens[page]) {
+                    Screen.Theme -> ThemeEditorScreen(
+                        manifest = project.manifest,
+                        onManifestUpdate = { viewModel.updateManifest(it) },
+                        onNavigateToAbout = { aboutVisible = true }
+                    )
+                    Screen.Colors -> ColorsEditorScreen(
+                        colors = project.colors,
+                        onColorUpdate = { key, value -> viewModel.updateColor(key, value) },
+                        onResetColors = { viewModel.resetColors() },
+                        onImportColors = { viewModel.importColors(it) }
+                    )
+                    Screen.Strings -> StringsEditorScreen(
+                        strings = project.strings,
+                        onStringUpdate = { key, value -> viewModel.updateString(key, value) },
+                        onResetStrings = { viewModel.resetStrings() },
+                        onImportStrings = { viewModel.importStrings(it) }
+                    )
+                    Screen.Images -> ImageManagerScreen(
+                        images = project.images,
+                        onSetImage = { path, uri -> viewModel.setImage(path, uri) },
+                        onClearImage = { path -> viewModel.clearImage(path) },
+                        onBatchImport = { mapping -> viewModel.batchImportImages(mapping) }
+                    )
+                    Screen.Export -> ExportScreen(
+                        project = project,
+                        onExport = { context ->
+                            ThemeExporter.export(
+                                context = context,
+                                manifest = project.manifest,
+                                colors = project.colors,
+                                strings = project.strings,
+                                images = project.images
+                            )
+                        },
+                        onNavigateToAbout = { aboutVisible = true }
+                    )
+                    else -> Unit
+                }
             }
-            composable(Screen.Colors.route) {
-                ColorsEditorScreen(
-                    colors = project.colors,
-                    onColorUpdate = { key, value -> viewModel.updateColor(key, value) },
-                    onResetColors = { viewModel.resetColors() },
-                    onImportColors = { viewModel.importColors(it) }
-                )
-            }
-            composable(Screen.Strings.route) {
-                StringsEditorScreen(
-                    strings = project.strings,
-                    onStringUpdate = { key, value -> viewModel.updateString(key, value) },
-                    onResetStrings = { viewModel.resetStrings() },
-                    onImportStrings = { viewModel.importStrings(it) }
-                )
-            }
-            composable(Screen.Images.route) {
-                ImageManagerScreen(
-                    images = project.images,
-                    onSetImage = { path, uri -> viewModel.setImage(path, uri) },
-                    onClearImage = { path -> viewModel.clearImage(path) },
-                    onBatchImport = { mapping -> viewModel.batchImportImages(mapping) }
-                )
-            }
-            composable(Screen.Export.route) {
-                ExportScreen(
-                    project = project,
-                    onExport = { context ->
-                        ThemeExporter.export(
-                            context = context,
-                            manifest = project.manifest,
-                            colors = project.colors,
-                            strings = project.strings,
-                            images = project.images
-                        )
-                    },
-                    onNavigateToAbout = { navController.navigate(Screen.About.route) }
-                )
-            }
-            composable(Screen.About.route) {
-                AboutScreen()
+
+            AnimatedVisibility(
+                visible = aboutVisible,
+                enter = fadeIn(tween(durationMillis = 250)),
+                exit = fadeOut(tween(durationMillis = 250))
+            ) {
+                AboutScreen(onBack = { aboutVisible = false })
             }
         }
+    }
+
+    BackHandler(enabled = aboutVisible) {
+        aboutVisible = false
     }
 }
