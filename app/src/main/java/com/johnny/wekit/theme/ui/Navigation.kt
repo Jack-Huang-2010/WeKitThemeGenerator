@@ -41,6 +41,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.johnny.wekit.theme.util.ThemeExporter
 import com.johnny.wekit.theme.viewmodel.ThemeViewModel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 
 sealed class Screen(
@@ -172,18 +173,15 @@ fun ThemeNavigation(viewModel: ThemeViewModel = viewModel()) {
 
     // 预测性返回：返回手势进行中 about 浮层跟手淡出；手势提交关闭，滑回取消
     PredictiveBackHandler(enabled = aboutVisible) { progress ->
-        var committed = false
         try {
             progress.collect { backEvent ->
                 backProgress = backEvent.progress
             }
-            committed = true
-        } finally {
-            if (committed) {
-                aboutVisible = false
-            } else {
-                backProgress = 0f
-            }
+            // 手势提交：关闭关于页
+            aboutVisible = false
+        } catch (e: CancellationException) {
+            // 手势取消：恢复不透明
+            backProgress = 0f
         }
     }
 }
