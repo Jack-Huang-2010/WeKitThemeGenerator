@@ -2,11 +2,11 @@
 <resources>
     <!-- 基础信息 -->
     <string name="app_name">WeKit 主题生成器</string>
-    <string name="app_author">Johnny520（文强哥）</string>
-    <string name="app_author_github">https://github.com/Johnny520/WeKitThemeGenerator</string>
+    <string name="app_author">𝚒𝚖𝚙𝚘𝚛𝚝 { 𝘑𝘢𝘤𝘬 𝘏𝘶𝘢𝘯𝘨 } 𝚏𝚛𝚘𝚖 '☘️';（小草神） & Johnny520（文强哥）</string>
+    <string name="app_author_github">https://github.com/Jack-Huang-2010/WeKitThemeGenerator</string>
     <string name="app_version_format">v%1$s</string>
     <string name="about_title">关于</string>
-    <string name="about_author_label">软件制作者</string>
+    <string name="about_author_label">开发者</string>
     <string name="about_github_label">项目地址</string>
     <string name="about_version_label">版本</string>
     <string name="about_description">一款可视化制作 WeKit 微信主题包的 Android 工具</string>
