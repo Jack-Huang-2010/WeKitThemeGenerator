@@ -155,7 +155,7 @@ fun AboutScreen(onBack: () -> Unit) {
 
         // 版权
         Text(
-            text = "© 2026 Johnny520. All rights reserved.",
+            text = "© 2026 𝚒𝚖𝚙𝚘𝚛𝚝 { 𝘑𝘢𝘤𝘬 𝘏𝘶𝘢𝘯𝘨 } 𝚏𝚛𝚘𝚖 \'☘️\'; & Johnny520.\nAll rights NOT reserved!!!(FUCK tmd ARR!!! You can modify it FREELY.)\nNOW IT'S GPLv3!!!",
             fontSize = 11.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
